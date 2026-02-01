@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrafterHub - Minecraft Utility Toolkit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0b0b0b;
+            --bg-card: #161616;
+            --accent-purple: #d455ff;
+            --accent-blue: #4f9eff;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #606060;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Background Effects */
+        .bg-effects {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            opacity: 0.03;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(200px);
+        }
+
+        .bg-orb-1 {
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 800px;
+            background: var(--accent-purple);
+            opacity: 0.1;
+        }
+
+        .bg-orb-2 {
+            top: 20%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: var(--accent-blue);
+            opacity: 0.1;
+        }
+
+        .bg-orb-3 {
+            bottom: -10%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: #8b5cf6;
+            opacity: 0.1;
+        }
+
+        /* Language Selector */
+        .lang-selector {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 100;
+        }
+
+        .lang-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 50px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        .lang-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .lang-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .lang-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 120px;
+            padding: 8px 4px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .lang-dropdown.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .lang-option {
+            display: block;
+            width: 100%;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .lang-option:hover,
+        .lang-option.active {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+        }
+
+        .chevron {
+            transition: transform 0.3s ease;
+        }
+
+        .chevron.rotated {
+            transform: rotate(180deg);
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 24px;
+            z-index: 1;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 900px;
+        }
+
+        .logo-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            font-size: clamp(3.5rem, 10vw, 7rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        .logo-gradient {
+            background: linear-gradient(135deg, var(--accent-purple), #a855f7, var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-glow {
+            position: absolute;
+            inset: 0;
+            font-size: clamp(3.5rem, 10vw, 7rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            filter: blur(40px);
+            opacity: 0.3;
+            pointer-events: none;
+            background: linear-gradient(135deg, var(--accent-purple), #a855f7, var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: clamp(1.25rem, 3vw, 1.75rem);
+            font-weight: 600;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 16px;
+        }
+
+        .description {
+            font-size: clamp(1rem, 2vw, 1.125rem);
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+        }
+
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 36px;
+            border-radius: 50px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            color: white;
+            font-weight: 600;
+            font-size: 1.125rem;
+            text-decoration: none;
+            transition: all 0.5s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .cta-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 60px rgba(212, 85, 255, 0.4);
+        }
+
+        .cta-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+
+        .scroll-indicator-inner {
+            width: 24px;
+            height: 40px;
+            border-radius: 50px;
+            border: 2px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 8px;
+        }
+
+        .scroll-dot {
+            width: 4px;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.4);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-10px); }
+            60% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* Features Section */
+        .features {
+            position: relative;
+            padding: 100px 24px;
+            z-index: 1;
+        }
+
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 60px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            position: relative;
+            padding: 32px;
+            border-radius: 20px;
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.5s ease;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--accent-purple), #8b5cf6, var(--accent-blue));
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: -1;
+        }
+
+        .feature-card::after {
+            content: '';
+            position: absolute;
+            inset: 1px;
+            border-radius: 19px;
+            background: var(--bg-card);
+            z-index: -1;
+        }
+
+        .feature-card:hover::before {
+            opacity: 0.6;
+        }
+
+        .feature-card:hover {
+            border-color: transparent;
+            transform: translateY(-4px);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(212, 85, 255, 0.15), rgba(79, 158, 255, 0.15));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            transition: all 0.5s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            background: linear-gradient(135deg, rgba(212, 85, 255, 0.25), rgba(79, 158, 255, 0.25));
+        }
+
+        .feature-icon svg {
+            width: 28px;
+            height: 28px;
+            color: var(--accent-purple);
+            transition: color 0.5s ease;
+        }
+
+        .feature-card:hover .feature-icon svg {
+            color: white;
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .feature-desc {
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Footer */
+        .footer {
+            position: relative;
+            padding: 60px 24px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            z-index: 1;
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .disclaimer {
+            font-size: clamp(0.75rem, 2vw, 0.875rem);
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .copyright {
+            font-size: 0.75rem;
+            color: #404040;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .lang-selector {
+                top: 16px;
+                right: 16px;
+            }
+
+            .hero {
+                padding: 60px 20px;
+            }
+
+            .features {
+                padding: 60px 20px;
+            }
+
+            .feature-card {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-effects">
+        <div class="bg-grid"></div>
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <div class="lang-selector">
+        <button class="lang-btn" onclick="toggleLangDropdown()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <span id="currentLang">EN</span>
+            <svg class="chevron" id="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+        </button>
+        <div class="lang-dropdown" id="langDropdown">
+            <button class="lang-option" onclick="setLanguage('en')">English</button>
+            <button class="lang-option" onclick="setLanguage('ja')">日本語</button>
+        </div>
+    </div>
+
+    <section class="hero">
+        <div class="hero-content">
+            <div class="logo-wrapper">
+                <h1 class="logo">
+                    <span class="logo-gradient">Crafter</span>Hub
+                </h1>
+                <div class="logo-glow" aria-hidden="true">
+                    <span>Crafter</span>Hub
+                </div>
+            </div>
+            <p class="tagline" data-i18n="tagline">The Ultimate Minecraft Utility Toolkit</p>
+            <p class="description" data-i18n="description">Seed analysis, biome finder, and structure locator. The most powerful web tool to accelerate your Minecraft gameplay.</p>
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="cta-btn">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                <span data-i18n="cta">View on GitHub</span>
+            </a>
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-indicator-inner">
+                <div class="scroll-dot"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="features-container">
+            <h2 class="section-title" data-i18n="features">Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title" data-i18n="feature1Title">Fast Seed Map</h3>
+                    <p class="feature-desc" data-i18n="feature1Desc">Compatible with latest generation. Visualize surrounding biomes instantly.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="4 17 10 11 4 5"></polyline>
+                            <line x1="12" y1="19" x2="20" y2="19"></line>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title" data-i18n="feature2Title">Structure Tracker</h3>
+                    <p class="feature-desc" data-i18n="feature2Desc">Locate Strongholds, Villages, and Slime Chunks with precision.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title" data-i18n="feature3Title">Cross-Platform</h3>
+                    <p class="feature-desc" data-i18n="feature3Desc">Designed to work perfectly on both PC browsers and mobile apps.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title" data-i18n="feature4Title">Biome Search</h3>
+                    <p class="feature-desc" data-i18n="feature4Desc">Filter by specific biomes or rare terrain to find your perfect spawn location.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="disclaimer" data-i18n="disclaimer">NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.</p>
+            <p class="copyright">© <span id="year"></span> CrafterHub. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const translations = {
+            en: {
+                tagline: "The Ultimate Minecraft Utility Toolkit",
+                description: "Seed analysis, biome finder, and structure locator. The most powerful web tool to accelerate your Minecraft gameplay.",
+                cta: "View on GitHub",
+                features: "Features",
+                feature1Title: "Fast Seed Map",
+                feature1Desc: "Compatible with latest generation. Visualize surrounding biomes instantly.",
+                feature2Title: "Structure Tracker",
+                feature2Desc: "Locate Strongholds, Villages, and Slime Chunks with precision.",
+                feature3Title: "Cross-Platform",
+                feature3Desc: "Designed to work perfectly on both PC browsers and mobile apps.",
+                feature4Title: "Biome Search",
+                feature4Desc: "Filter by specific biomes or rare terrain to find your perfect spawn location.",
+                disclaimer: "NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT."
+            },
+            ja: {
+                tagline: "究極のMinecraftユーティリティツールキット",
+                description: "シード値解析、バイオーム検索、構造物特定。マイクラ攻略を加速させる最強のWebツール。",
+                cta: "GitHubで見る",
+                features: "機能",
+                feature1Title: "爆速シードマップ",
+                feature1Desc: "最新の生成アルゴリズムに対応。一瞬で周囲のバイオームを可視化します。",
+                feature2Title: "構造物トラッカー",
+                feature2Desc: "要塞、村、スライムチャンクの位置をシード値からピンポイントで特定。",
+                feature3Title: "マルチデバイス対応",
+                feature3Desc: "PCブラウザだけでなく、スマホアプリとしても快適に動作する設計。",
+                feature4Title: "バイオーム検索",
+                feature4Desc: "特定のバイオームやレアな地形で絞り込み、最適なスポーン地点を見つけます。",
+                disclaimer: "これはMojangまたはMicrosoftの公式製品ではありません。承認または提携もしていません。"
+            }
+        };
+
+        let currentLang = 'en';
+        let dropdownOpen = false;
+
+        function toggleLangDropdown() {
+            dropdownOpen = !dropdownOpen;
+            document.getElementById('langDropdown').classList.toggle('active', dropdownOpen);
+            document.getElementById('chevron').classList.toggle('rotated', dropdownOpen);
+        }
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('currentLang').textContent = lang === 'en' ? 'EN' : 'JP';
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+
+            document.querySelectorAll('.lang-option').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.toLowerCase().includes(lang === 'ja' ? '日本語' : 'english')) {
+                    btn.classList.add('active');
+                }
+            });
+
+            if (dropdownOpen) toggleLangDropdown();
+        }
+
+        window.onload = () => {
+            const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const userLang = navigator.language || navigator.userLanguage;
+            
+            if (userTimeZone === "Asia/Tokyo" || userLang.startsWith("ja")) {
+                setLanguage('ja');
+            } else {
+                setLanguage('en');
+            }
+            document.getElementById('year').textContent = new Date().getFullYear();
+        };
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.lang-selector') && dropdownOpen) {
+                toggleLangDropdown();
+            }
+        });
+    </script>
+</body>
+</html>
